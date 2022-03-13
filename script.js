@@ -169,30 +169,133 @@ const getCountryAndNeighbour2 = function (country) {
 ////////// REJECTING PROMISES //////////////
 ///////////////////////////////////////////
 const getCountryAndNeighbour3 = function (country) {
+  // Country 1
   fetch(`https://restcountries.com/v3.1/name/${country}`)
-    .then(res => res.json())
+    .then(res => {
+      console.log(res);
+      // Create an error message
+      if (!res.ok) throw new Error(`Country not found (${res.status})`);
+      return res.json();
+    })
     .then(data => {
       console.log(data[0]);
       renderCountry(data[0], '');
       const neighbour = data[0].borders[0];
       if (!neighbour) return;
-      // Country #2
-      fetch(`https://restcountries.com/v3.1/alpha/${neighbour}`)
-        .then(res1 => res1.json())
-        .then(data => renderCountry(data[0], 'neighbour'))
-        // Catching error
-        .catch(err => {
-          console.error(`💥💥 ${err} 💥💥`);
-          renderError(
-            `Something went wrong 💥💥💥💥, ${err.message}. Try again!`
-          );
-        })
-        .finally(() => {
-          countriesContainer.style.opacity = 1;
-        });
+      // Return a new api for Country #2
+      return fetch(`https://restcountries.com/v3.1/alpha/${neighbour}`);
+    })
+    .then(res1 => res1.json())
+    .then(data => renderCountry(data[0], 'neighbour'))
+    // Catching an error
+    .catch(err => {
+      console.error(`💥💥 ${err} 💥💥`);
+      renderError(
+        `Something went wrong 💥💥💥💥, ${err.message}. Please try again!`
+      );
+    })
+    .finally(() => {
+      countriesContainer.style.opacity = 1;
     });
 };
 
 btn.addEventListener('click', function () {
-  getCountryAndNeighbour3('germany');
+  // getCountryAndNeighbour3('adas');
 });
+
+/////////////////////////////////////////////
+////////////////////////////////////////////
+///////////////////////////////////////////
+const getJSON = function (url, errorMessage = 'Something went wrong') {
+  return fetch(url).then(res => {
+    console.log(res);
+    // Create an error message
+    if (!res.ok) throw new Error(`${errorMessage} (${res.status})`);
+    return res.json();
+  });
+};
+const getCountryAndNeighbour4 = function (country) {
+  // Country 1
+  getJSON(`https://restcountries.com/v3.1/name/${country}`, 'Country not found')
+    .then(data => {
+      renderCountry(data[0]);
+      const neighbour = data[0].borders[0];
+      console.log(neighbour);
+      if (!neighbour) throw new Error('No neighbour found!');
+      // Return a new api for Country #2
+      return getJSON(`https://restcountries.com/v3.1/alpha/${neighbour}`);
+    })
+    .then(data => renderCountry(data[0], 'neighbour'))
+    // Catching an error
+    .catch(err => {
+      console.error(`💥💥 ${err} 💥💥`);
+      renderError(
+        `Something went wrong, 💥${err.message}💥. Please try again!`
+      );
+    })
+    .finally(() => {
+      countriesContainer.style.opacity = 1;
+    });
+};
+btn.addEventListener('click', function () {
+  // getCountryAndNeighbour4('vietnam');
+});
+
+/////////////////////////////////////////////
+//////// CODING CHALLENGE 1 ////////////////
+///////////////////////////////////////////
+const whereAmI = function (lat, lng) {
+  fetch(`https://geocode.xyz/${lat},${lng}?geoit=json`)
+    .then(res => {
+      if (!res.ok) throw new Error(`Problem with API (${res.status})`);
+      return res.json();
+    })
+    .then(data => {
+      console.log(`⚡️ You are in ${data.city}, city of ${data.country} ⚡️`);
+      return fetch(`https://restcountries.com/v3.1/name/${data.country}`);
+    })
+    .then(res1 => {
+      if (!res1.ok) throw new Error(`Country not found (${res1.status})`);
+      return res1.json();
+    })
+    .then(data => {
+      renderCountry(data[0]);
+    })
+    .catch(err => console.error(`🔥 ${err.message} 🔥`))
+    .finally(() => {
+      countriesContainer.style.opacity = 1;
+    });
+};
+// Test Data
+// whereAmI(52.508, 13.381);
+// whereAmI(19.037, 72.873);
+// whereAmI(-33.933, 18.474);
+
+/////////////////////////////////////////////
+//////////// EVENT LOOP ////////////////////
+///////////////////////////////////////////
+console.log('Test start');
+setTimeout(() => {
+  console.log('0 second timer');
+}, 0);
+Promise.resolve('Resolved Problem #1').then(res => console.log(res));
+Promise.resolve('Resolved Problem #2').then(res => {
+  for (let i = 0; i < 99999; i++) {}
+  console.log(res);
+});
+console.log('Test end');
+
+/////////////////////////////////////////////
+/////////// SIMPLE PROMISE /////////////////
+///////////////////////////////////////////
+const lottery = new Promise(function (resolve, reject) {
+  console.warn('🔮 Lottery draw is in progress 🔮');
+  setTimeout(function () {
+    if (Math.random() >= 0.5) {
+      resolve('YOU WIN');
+    } else {
+      reject(new Error('YOU LOST YOUR MONEY'));
+    }
+  }, 3000);
+});
+lottery.then(res => console.log(res)).catch(err => console.error(err));
