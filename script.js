@@ -4,7 +4,7 @@ const btn = document.querySelector('.btn-country');
 const countriesContainer = document.querySelector('.countries');
 
 /////////////////////////////////////////////
-////////////////////////////////////////////
+///////////// RENDERING ////////////////////
 ///////////////////////////////////////////
 const renderError = function (msg) {
   countriesContainer.insertAdjacentText('beforeend', msg);
@@ -12,7 +12,7 @@ const renderError = function (msg) {
 };
 
 /////////////////////////////////////////////
-////////////////////////////////////////////
+///////////// RENDERING ////////////////////
 ///////////////////////////////////////////
 const renderCountry = function (data, className = '') {
   const flag = data.flags.svg;
@@ -27,7 +27,7 @@ const renderCountry = function (data, className = '') {
         <div class="country__data">
           <h3 class="country__name">${countryName}</h3>
           <h4 class="country__region">${region}</h4>
-          <p class="country__row"><span>👫</span>${population} people</p>
+          <p class="country__row"><span>👫</span>${population} million people</p>
           <p class="country__row"><span>🗣️</span>${language}</p>
           <p class="country__row"><span>💰</span>${currency}</p>
         </div>
@@ -72,7 +72,7 @@ const getCountryData = function (country) {
 // getCountryData('usa');
 
 /////////////////////////////////////////////
-////////////////////////////////////////////
+////////////// AJAX CALL ///////////////////
 ///////////////////////////////////////////
 const getCountryAndNeighbour = function (country) {
   //AJAX call #1 for main country:
@@ -111,7 +111,7 @@ const getCountryAndNeighbour = function (country) {
 // getCountryAndNeighbour('vietnam');
 
 /////////////////////////////////////////////
-///////////// PROMISES  ////////////////////
+///////////// PROMISES /////////////////////
 ///////////////////////////////////////////
 const getCountryData1 = function (country) {
   fetch(`https://restcountries.com/v3.1/name/${country}`)
@@ -242,7 +242,7 @@ btn.addEventListener('click', function () {
 });
 
 /////////////////////////////////////////////
-//////// CODING CHALLENGE 1 ////////////////
+////////// CODING CHALLENGE 1 //////////////
 ///////////////////////////////////////////
 const whereAmI = function (lat, lng) {
   fetch(`https://geocode.xyz/${lat},${lng}?geoit=json`)
@@ -299,3 +299,101 @@ const lottery = new Promise(function (resolve, reject) {
   }, 3000);
 });
 lottery.then(res => console.log(res)).catch(err => console.error(err));
+
+/////////////////////////////////////////////
+////////////////////////////////////////////
+///////////////////////////////////////////
+const wait = function (seconds) {
+  return new Promise(function (resolve) {
+    setTimeout(resolve, seconds * 1000);
+  });
+};
+wait(2)
+  .then(() => {
+    console.log('I have waited for 2 second');
+    return wait(1);
+  })
+  .then(() => console.log('I have waited for 1 second'));
+
+/////////////////////////////////////////////
+////////////////////////////////////////////
+///////////////////////////////////////////
+const getPosition = function () {
+  return new Promise(function (resolve, reject) {
+    // navigator.geolocation.getCurrentPosition(
+    //   position => resolve(position),
+    //   err => reject(err)
+    // );
+    navigator.geolocation.getCurrentPosition(resolve, reject);
+  });
+};
+// getPosition().then(pos => console.log(pos));
+
+const whereAmI2 = function () {
+  getPosition()
+    .then(pos => {
+      const { latitude: lat, longitude: lng } = pos.coords;
+      return fetch(`https://geocode.xyz/${lat},${lng}?geoit=json`);
+    })
+    .then(res => {
+      if (!res.ok) throw new Error(`Problem with API (${res.status})`);
+      return res.json();
+    })
+    .then(data => {
+      console.log(`⚡️ You are in ${data.city}, city of ${data.country} ⚡️`);
+      return fetch(`https://restcountries.com/v3.1/name/${data.country}`);
+    })
+    .then(res1 => {
+      if (!res1.ok) throw new Error(`Country not found (${res1.status})`);
+      return res1.json();
+    })
+    .then(data => {
+      renderCountry(data[0]);
+    })
+    .catch(err => console.error(`🔥 ${err.message} 🔥`))
+    .finally(() => {
+      countriesContainer.style.opacity = 1;
+    });
+};
+
+btn.addEventListener('click', whereAmI2());
+
+/////////////////////////////////////////////
+//////// CODING CHALLENGE 2 ////////////////
+///////////////////////////////////////////
+const imageContainer = document.querySelector('.images');
+
+const createImage = function (imagePath) {
+  return new Promise(function (resolve, reject) {
+    const img = document.createElement('img');
+    img.src = imagePath;
+    img.addEventListener('load', function () {
+      imageContainer.append(img);
+      resolve(img);
+    });
+    img.addEventListener('error', function () {
+      reject(new Error('Image Not Found'));
+    });
+  });
+};
+
+let currentImgage; // manipulating global variable
+createImage('img/img-1.jpg')
+  .then(img => {
+    currentImgage = img;
+    console.log('Image 1 is loaded');
+    return wait(2);
+  })
+  .then(() => {
+    currentImgage.style.display = 'none';
+    return createImage('img/img-2.jpg');
+  })
+  .then(img => {
+    currentImgage = img;
+    console.log('Image 2 is loaded');
+    return wait(2);
+  })
+  .then(() => {
+    currentImgage.style.display = 'none';
+  })
+  .catch(err => console.error(err));
