@@ -8,7 +8,7 @@ const countriesContainer = document.querySelector('.countries');
 ///////////////////////////////////////////
 const renderError = function (msg) {
   countriesContainer.insertAdjacentText('beforeend', msg);
-  //   countriesContainer.style.opacity = 1;
+  countriesContainer.style.opacity = 1;
 };
 
 /////////////////////////////////////////////
@@ -34,7 +34,7 @@ const renderCountry = function (data, className = '') {
       </article>`;
 
   countriesContainer.insertAdjacentHTML('beforeend', html);
-  //   countriesContainer.style.opacity = 1;
+  countriesContainer.style.opacity = 1;
 };
 
 /////////////////////////////////////////////
@@ -55,9 +55,7 @@ const getCountryData = function (country) {
           <div class="country__data">
             <h3 class="country__name">${data.name.common}</h3>
             <h4 class="country__region">${data.region}</h4>
-            <p class="country__row"><span>👫</span>${(
-              +data.population / 1000000
-            ).toFixed(1)}</p>
+            <p class="country__row"><span>👫</span>${(+data.population / 1000000).toFixed(1)}</p>
             <p class="country__row"><span>🗣️</span>${languages[0]}</p>
             <p class="country__row"><span>💰</span>${currencies[0].name}</p>
           </div>
@@ -190,9 +188,7 @@ const getCountryAndNeighbour3 = function (country) {
     // Catching an error
     .catch(err => {
       console.error(`💥💥 ${err} 💥💥`);
-      renderError(
-        `Something went wrong 💥💥💥💥, ${err.message}. Please try again!`
-      );
+      renderError(`Something went wrong 💥💥💥💥, ${err.message}. Please try again!`);
     })
     .finally(() => {
       countriesContainer.style.opacity = 1;
@@ -214,6 +210,7 @@ const getJSON = function (url, errorMessage = 'Something went wrong') {
     return res.json();
   });
 };
+
 const getCountryAndNeighbour4 = function (country) {
   // Country 1
   getJSON(`https://restcountries.com/v3.1/name/${country}`, 'Country not found')
@@ -229,9 +226,7 @@ const getCountryAndNeighbour4 = function (country) {
     // Catching an error
     .catch(err => {
       console.error(`💥💥 ${err} 💥💥`);
-      renderError(
-        `Something went wrong, 💥${err.message}💥. Please try again!`
-      );
+      renderError(`Something went wrong, 💥${err.message}💥. Please try again!`);
     })
     .finally(() => {
       countriesContainer.style.opacity = 1;
@@ -329,6 +324,7 @@ const getPosition = function () {
 };
 // getPosition().then(pos => console.log(pos));
 
+/*
 const whereAmI2 = function () {
   getPosition()
     .then(pos => {
@@ -355,8 +351,8 @@ const whereAmI2 = function () {
       countriesContainer.style.opacity = 1;
     });
 };
-
-btn.addEventListener('click', whereAmI2());
+*/
+// btn.addEventListener('click', whereAmI2());
 
 /////////////////////////////////////////////
 //////// CODING CHALLENGE 2 ////////////////
@@ -378,6 +374,7 @@ const createImage = function (imagePath) {
 };
 
 let currentImgage; // manipulating global variable
+/* 
 createImage('img/img-1.jpg')
   .then(img => {
     currentImgage = img;
@@ -396,4 +393,103 @@ createImage('img/img-1.jpg')
   .then(() => {
     currentImgage.style.display = 'none';
   })
-  .catch(err => console.error(err));
+  .catch(err => console.error(err)); 
+  */
+
+/////////////////////////////////////////////
+/////////// ASYNC AWAIT ////////////////////
+///////////////////////////////////////////
+const whereAmI3 = async function () {
+  try {
+    // geolocation
+    const pos = await getPosition();
+    const { latitude: lat, longitude: lng } = pos.coords;
+    // reverse geocoding
+    const resGeo = await fetch(`https://geocode.xyz/${lat},${lng}?geoit=json`);
+    if (!resGeo.ok) throw new Error(`🔥 Problem Getting Location Data 🔥`);
+    const dataGeo = await resGeo.json();
+    // country data
+    const location = await fetch(`https://restcountries.com/v3.1/name/${dataGeo.country}`);
+    if (!resGeo.ok) throw new Error(`🔥 Problem Getting Country 🔥`);
+    const data = await location.json();
+    renderCountry(data[0]);
+    //this will be return in the 'then'
+    return `You are in ${dataGeo.city}, city of ${dataGeo.country}`;
+  } catch (err) {
+    console.error(err);
+    renderError(`${err.message}`);
+    throw err;
+  }
+};
+console.log(`1: Get location`);
+// whereAmI3()
+//   .then(city => console.warn(`2: ${city}`))
+//   .catch(err => console.error(`2: ${err}`));
+// console.log(`3`);
+(async function () {
+  try {
+    const city = await whereAmI3();
+    console.log(`2: ${city}`);
+  } catch {
+    console.error(`2: ${err}`);
+  }
+  console.log(`3: Finished getting location`);
+})();
+
+/////////////////////////////////////////////
+///////// PROMISES IN PARALLEL /////////////
+///////////////////////////////////////////
+const get3Countries = async function (c1, c2, c3) {
+  try {
+    // const [data1] = await getJSON(`https://restcountries.com/v3.1/name/${c1}`);
+    // const [data2] = await getJSON(`https://restcountries.com/v3.1/name/${c2}`);
+    // const [data3] = await getJSON(`https://restcountries.com/v3.1/name/${c3}`);
+    //  console.log([data1.capital, data2.capital, data3.capital]);
+
+    const data = await Promise.all([
+      getJSON(`https://restcountries.com/v3.1/name/${c1}`),
+      getJSON(`https://restcountries.com/v3.1/name/${c2}`),
+      getJSON(`https://restcountries.com/v3.1/name/${c3}`),
+    ]);
+    console.log(data.map(data => data[0].capital));
+  } catch (err) {
+    console.log(err);
+  }
+};
+get3Countries('Vietnam', 'Laos', 'Cambodia');
+
+/////////////////////////////////////////////
+///////// PROMISES COMBINATORS /////////////
+///////////////////////////////////////////
+
+// Promise.race //
+(async function () {
+  const response = await Promise.race([
+    getJSON(`https://restcountries.com/v3.1/name/Vietnam`),
+    getJSON(`https://restcountries.com/v3.1/name/Laos`),
+    getJSON(`https://restcountries.com/v3.1/name/Cambodia`),
+  ]);
+  console.log(response[0]);
+})();
+
+const requestTimeOut = function (sec) {
+  return new Promise(function (_, reject) {
+    setTimeout(function () {
+      reject(new Error('Request has timed out'));
+    }, sec * 1000);
+  });
+};
+
+// Promise.allSettled //
+Promise.allSettled([
+  Promise.resolve('Success'),
+  Promise.reject('Fail'),
+  Promise.resolve('Another success'),
+]).then(res => console.log(res));
+
+// Promise.any //
+Promise.any([
+  Promise.resolve('Success'),
+  Promise.reject('Fail'),
+  Promise.resolve('Another success'),
+]).then(res => console.log(res));
