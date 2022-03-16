@@ -355,7 +355,7 @@ const whereAmI2 = function () {
 // btn.addEventListener('click', whereAmI2());
 
 /////////////////////////////////////////////
-//////// CODING CHALLENGE 2 ////////////////
+////////// CODING CHALLENGE 2 //////////////
 ///////////////////////////////////////////
 const imageContainer = document.querySelector('.images');
 
@@ -493,3 +493,64 @@ Promise.any([
   Promise.reject('Fail'),
   Promise.resolve('Another success'),
 ]).then(res => console.log(res));
+
+/////////////////////////////////////////////
+////////// CODING CHALLENGE 3 //////////////
+///////////////////////////////////////////
+
+// FROM CODING CHALLENGE 2 //
+/* 
+let currentImgage;   // manipulating global variable
+createImage('img/img-1.jpg')
+  .then(img => {
+    currentImgage = img;
+    console.log('Image 1 is loaded');
+    return wait(2);
+  })
+  .then(() => {
+    currentImgage.style.display = 'none';
+    return createImage('img/img-2.jpg');
+  })
+  .then(img => {
+    currentImgage = img;
+    console.log('Image 2 is loaded');
+    return wait(2);
+  })
+  .then(() => {
+    currentImgage.style.display = 'none';
+  })
+  .catch(err => console.error(err)); 
+  */
+
+const loadNPause = async function () {
+  try {
+    // load image #1
+    let img = await createImage('img/img-1.jpg');
+    console.log('Image 1 is loaded');
+    await wait(2);
+    img.style.display = 'none';
+
+    // load image #2
+    img = await createImage('img/img-2.jpg');
+    console.log('Image 2 is loaded');
+    await wait(2);
+    img.style.display = 'none';
+  } catch (err) {
+    console.log(err);
+  }
+};
+// loadNPause();
+
+const loadAll = async function (imgArr) {
+  try {
+    // createImage is now a promise => 'await' to return sth
+    const imgs = imgArr.map(async img => await createImage(img));
+    console.log(imgs);
+
+    const imgsEl = await Promise.all(imgs);
+    console.log(imgsEl);
+  } catch (err) {
+    console.log(err);
+  }
+};
+loadAll(['img/img-1.jpg', 'img/img-2.jpg', 'img/img-3.jpg']);
